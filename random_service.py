@@ -116,3 +116,91 @@ class RandomService:
 
     def compare_digest(self, a: str, b: str) -> bool:
         return secrets.compare_digest(a, b)
+
+    def uniform(self, low: float = 0.0, high: float = 1.0) -> float:
+        if low > high:
+            low, high = high, low
+        return self._rng.uniform(low, high)
+
+    def normal(self, mu: float = 0.0, sigma: float = 1.0) -> float:
+        if sigma <= 0:
+            raise ValueError("标准差 sigma 必须大于 0")
+        return self._rng.gauss(mu, sigma)
+
+    def gauss(self, mu: float = 0.0, sigma: float = 1.0) -> float:
+        return self.normal(mu, sigma)
+
+    def exponential(self, lambd: float = 1.0) -> float:
+        if lambd <= 0:
+            raise ValueError("参数 lambd 必须大于 0")
+        return self._rng.expovariate(lambd)
+
+    def triangular(
+        self,
+        low: float = 0.0,
+        high: float = 1.0,
+        mode: Optional[float] = None,
+    ) -> float:
+        if low > high:
+            low, high = high, low
+        if mode is not None and not (low <= mode <= high):
+            raise ValueError("mode 必须在 [low, high] 范围内")
+        return self._rng.triangular(low, high, mode)
+
+    def beta(self, alpha: float, beta: float) -> float:
+        if alpha <= 0 or beta <= 0:
+            raise ValueError("alpha 和 beta 必须大于 0")
+        return self._rng.betavariate(alpha, beta)
+
+    def gamma(self, alpha: float, beta: float) -> float:
+        if alpha <= 0 or beta <= 0:
+            raise ValueError("alpha 和 beta 必须大于 0")
+        return self._rng.gammavariate(alpha, beta)
+
+    def lognormal(self, mu: float = 0.0, sigma: float = 1.0) -> float:
+        if sigma <= 0:
+            raise ValueError("标准差 sigma 必须大于 0")
+        return self._rng.lognormvariate(mu, sigma)
+
+    def pareto(self, alpha: float) -> float:
+        if alpha <= 0:
+            raise ValueError("alpha 必须大于 0")
+        return self._rng.paretovariate(alpha)
+
+    def weibull(self, alpha: float, beta: float) -> float:
+        if alpha <= 0 or beta <= 0:
+            raise ValueError("alpha 和 beta 必须大于 0")
+        return self._rng.weibullvariate(alpha, beta)
+
+    def vonmises(self, mu: float, kappa: float) -> float:
+        if kappa <= 0:
+            raise ValueError("kappa 必须大于 0")
+        return self._rng.vonmisesvariate(mu, kappa)
+
+    def sample_distribution(
+        self,
+        name: str,
+        count: int,
+        **params,
+    ) -> List[float]:
+        if count <= 0:
+            raise ValueError("count 必须大于 0")
+        dist_map = {
+            "uniform": self.uniform,
+            "normal": self.normal,
+            "gauss": self.normal,
+            "exponential": self.exponential,
+            "triangular": self.triangular,
+            "beta": self.beta,
+            "gamma": self.gamma,
+            "lognormal": self.lognormal,
+            "pareto": self.pareto,
+            "weibull": self.weibull,
+            "vonmises": self.vonmises,
+        }
+        if name not in dist_map:
+            raise ValueError(
+                f"不支持的分布 '{name}'，支持: {', '.join(dist_map.keys())}"
+            )
+        func = dist_map[name]
+        return [func(**params) for _ in range(count)]
